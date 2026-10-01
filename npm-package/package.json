@@ -17,7 +17,6 @@
   },
   "optionalDependencies": {
     "@ktui/linux-x64":   "0.1.0",
-    "@ktui/darwin-x64":  "0.1.0",
     "@ktui/darwin-arm64":"0.1.0",
     "@ktui/win32-x64":   "0.1.0"
   },

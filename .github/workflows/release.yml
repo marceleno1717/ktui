@@ -40,9 +40,6 @@ jobs:
             target: linux-x64
             bin: ktui
 
-          - os: macos-13          # Intel Mac
-            target: darwin-x64
-            bin: ktui
 
           - os: macos-latest      # Apple Silicon (M1)
             target: darwin-arm64
@@ -96,10 +93,9 @@ jobs:
         run: |
           mkdir -p release
           cp artifacts/ktui-linux-x64/ktui      release/ktui-linux-x64
-          cp artifacts/ktui-darwin-x64/ktui      release/ktui-darwin-x64
           cp artifacts/ktui-darwin-arm64/ktui    release/ktui-darwin-arm64
           cp artifacts/ktui-win32-x64/ktui.exe   release/ktui-win32-x64.exe
-          chmod +x release/ktui-linux-x64 release/ktui-darwin-x64 release/ktui-darwin-arm64
+          chmod +x release/ktui-linux-x64 release/ktui-darwin-arm64
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -151,7 +147,6 @@ jobs:
           }
 
           stage linux-x64   ktui
-          stage darwin-x64  ktui
           stage darwin-arm64 ktui
           stage win32-x64   ktui.exe
 

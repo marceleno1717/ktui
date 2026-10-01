@@ -13,7 +13,6 @@ const os   = require("os");
 // Map Node's process.platform + arch to our package names
 const PLATFORM_MAP = {
   "linux-x64":    "@ktui/linux-x64",
-  "darwin-x64":   "@ktui/darwin-x64",
   "darwin-arm64": "@ktui/darwin-arm64",
   "win32-x64":    "@ktui/win32-x64",
 };
@@ -23,7 +22,7 @@ const pkg = PLATFORM_MAP[key];
 
 if (!pkg) {
   console.error(`ktui: unsupported platform: ${key}`);
-  console.error("Supported platforms: linux-x64, darwin-x64, darwin-arm64, win32-x64");
+  console.error("Supported platforms: linux-x64, darwin-arm64, win32-x64");
   process.exit(1);
 }
 
