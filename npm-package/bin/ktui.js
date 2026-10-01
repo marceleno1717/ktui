@@ -12,9 +12,7 @@ const os   = require("os");
 
 // Map Node's process.platform + arch to our package names
 const PLATFORM_MAP = {
-  "linux-x64":    "@ktui/linux-x64",
-  "darwin-arm64": "@ktui/darwin-arm64",
-  "win32-x64":    "@ktui/win32-x64",
+  "linux-x64": "@ktui/linux-x64",
 };
 
 const key = `${process.platform}-${os.arch()}`;
@@ -22,7 +20,7 @@ const pkg = PLATFORM_MAP[key];
 
 if (!pkg) {
   console.error(`ktui: unsupported platform: ${key}`);
-  console.error("Supported platforms: linux-x64, darwin-arm64, win32-x64");
+  console.error("Supported platform: linux-x64");
   process.exit(1);
 }
 
@@ -35,7 +33,7 @@ try {
   binPath = path.join(pkgDir, "bin", binName);
 } catch {
   console.error(`ktui: platform package ${pkg} is not installed.`);
-  console.error("Try reinstalling: npm install -g ktui");
+  console.error("Try reinstalling: npm install -g @ktui/editor");
   process.exit(1);
 }
 

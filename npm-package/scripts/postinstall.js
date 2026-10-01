@@ -8,7 +8,7 @@
 
 const os = require("os");
 
-const SUPPORTED = ["linux-x64", "darwin-arm64", "win32-x64"];
+const SUPPORTED = ["linux-x64"];
 const key = `${process.platform}-${os.arch()}`;
 
 if (!SUPPORTED.includes(key)) {

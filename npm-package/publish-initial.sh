@@ -4,21 +4,12 @@
 
 set -e
 
+# Change to the directory where this script is located
+cd "$(dirname "$0")"
+
 echo "Publishing initial ktui-linux-x64..."
 cd npm/ktui-linux-x64
 mkdir -p bin && touch bin/ktui && chmod +x bin/ktui
-npm publish --access public
-cd ../..
-
-echo "Publishing initial ktui-darwin-arm64..."
-cd npm/ktui-darwin-arm64
-mkdir -p bin && touch bin/ktui && chmod +x bin/ktui
-npm publish --access public
-cd ../..
-
-echo "Publishing initial ktui-win32-x64..."
-cd npm/ktui-win32-x64
-mkdir -p bin && touch bin/ktui.exe
 npm publish --access public
 cd ../..
 
