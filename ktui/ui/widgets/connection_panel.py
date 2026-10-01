@@ -93,7 +93,10 @@ class ConnectionPanel(Widget):
         contexts = get_all_contexts()
         sel_ctx.set_options([(c, c) for c in contexts])
         self._last_context = status.context_name
-        sel_ctx.value = status.context_name
+        if status.context_name and status.context_name in contexts:
+            sel_ctx.value = status.context_name
+        else:
+            sel_ctx.clear()
         sel_ctx.display = True
 
         if status.connected:
@@ -107,7 +110,10 @@ class ConnectionPanel(Widget):
             self._last_namespace = status.namespace
             
             sel_ns.set_options([(n, n) for n in namespaces])
-            sel_ns.value = status.namespace
+            if status.namespace and status.namespace in namespaces:
+                sel_ns.value = status.namespace
+            else:
+                sel_ns.clear()
             sel_ns.display = True
             btn.display = False
         else:
