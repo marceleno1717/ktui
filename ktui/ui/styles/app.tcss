@@ -1,0 +1,165 @@
+/* ------ App-level layout ----------------------------------- */
+
+Screen {
+    layout: vertical;
+}
+
+#main-layout {
+    height: 1fr;
+    layout: horizontal;
+}
+
+/* ------ Sidebar -------------------------------------------- */
+
+#sidebar {
+    width: 28;
+    min-width: 20;
+    height: 100%;
+    border-right: solid $border;
+    layout: vertical;
+}
+
+#platform-tabs {
+    height: 3;
+    min-height: 3;
+    max-height: 3;
+    margin: 1 1;
+}
+
+#resource-list {
+    height: 1fr;
+}
+
+#resource-list > ListItem {
+    padding: 0 2;
+}
+
+#resource-list > ListItem.--highlight {
+    background: $boost;
+    color: $accent;
+    text-style: bold;
+}
+
+/* ------ Content area --------------------------------------- */
+
+#content-area {
+    width: 1fr;
+    height: 100%;
+    layout: vertical;
+    padding: 0;
+}
+
+
+#form-scroll {
+    height: 1fr;
+    padding: 1 4;
+}
+
+.placeholder-text {
+    color: $text-muted;
+    margin: 2 4;
+}
+
+/* ------ Toolbar -------------------------------------------- */
+
+#toolbar {
+    height: auto;
+    min-height: 4;
+    border-bottom: solid $border;
+    padding: 0 1;
+    align: left middle;
+}
+
+#resource-header {
+    width: 1fr;
+    color: $text;
+    text-style: bold;
+    content-align: left middle;
+}
+
+#toolbar Button {
+    margin-right: 2;
+    min-width: 16;
+}
+
+Button {
+    border: round $panel-lighten-3;
+    background: transparent;
+    color: $text;
+}
+
+Button:hover {
+    border: round $accent;
+    color: $accent;
+}
+
+Button.-primary {
+    border: round $primary-lighten-2;
+    color: $primary-lighten-2;
+}
+
+Button.-primary:hover {
+    border: round $primary-lighten-3;
+    color: $primary-lighten-3;
+}
+
+Button.-success {
+    border: round $success-lighten-1;
+    color: $success-lighten-1;
+}
+
+Button.-success:hover {
+    border: round $success-lighten-2;
+    color: $success-lighten-2;
+}
+
+/* ------ Form field containers ------------------------------ */
+
+.form-field {
+    height: auto;
+    margin-bottom: 1;
+}
+
+.form-field Label {
+    text-style: bold;
+    color: $text-muted;
+}
+
+.form-input {
+    margin-top: 0;
+}
+
+.readonly-value {
+    color: $accent;
+    text-style: italic;
+    padding: 0 1;
+}
+
+.field-description {
+    color: $text-muted;
+    text-style: italic;
+}
+
+/* ------ Collapsible sections (nested models) --------------- */
+
+.form-section {
+    margin-bottom: 1;
+    padding: 0 1;
+}
+
+.form-section CollapsibleTitle {
+    text-style: bold;
+    color: $accent;
+}
+
+/* ------ Map editor ----------------------------------------- */
+
+MapEditor {
+    margin-top: 0;
+}
+
+/* ------ List editor ---------------------------------------- */
+
+ListEditor {
+    margin-top: 0;
+}

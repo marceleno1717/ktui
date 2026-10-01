@@ -1,0 +1,27 @@
+{
+  "name": "ktui",
+  "version": "0.1.0",
+  "description": "An interactive terminal UI for building Kubernetes YAML manifests",
+  "license": "PolyForm-Noncommercial-1.0.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/marceleno1717/ktui"
+  },
+  "homepage": "https://github.com/marceleno1717/ktui#readme",
+  "keywords": ["kubernetes", "k8s", "yaml", "tui", "terminal", "cli", "manifest"],
+  "bin": {
+    "ktui": "./bin/ktui.js"
+  },
+  "scripts": {
+    "postinstall": "node scripts/postinstall.js"
+  },
+  "optionalDependencies": {
+    "@ktui/linux-x64":   "0.1.0",
+    "@ktui/darwin-x64":  "0.1.0",
+    "@ktui/darwin-arm64":"0.1.0",
+    "@ktui/win32-x64":   "0.1.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

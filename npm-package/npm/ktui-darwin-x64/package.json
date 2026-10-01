@@ -1,0 +1,12 @@
+{
+  "name": "@ktui/darwin-x64",
+  "version": "0.1.0",
+  "description": "ktui pre-built binary for darwin-x64",
+  "license": "PolyForm-Noncommercial-1.0.0",
+  "os": ["darwin"],
+  "cpu": ["x64"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/marceleno1717/ktui"
+  }
+}

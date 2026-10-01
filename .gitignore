@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+
+# PyInstaller build artifacts
+build/pyinstaller/
+
+# npm binary artifacts (built by CI, not committed)
+npm-package/npm/*/bin/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test scratch files
+test_debug*.py
+test_add_field*.py
+test_merge*.py
+test_tree.py
+test_quit.py
+dom.txt
+output.yaml
