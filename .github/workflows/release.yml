@@ -175,6 +175,7 @@ jobs:
       - name: Publish main package
         run: |
           cd npm-package
+          chmod +x bin/ktui.js
           npm publish --provenance --access public
 
   # ─────────────────────────────────────────────────────────────────────────────
