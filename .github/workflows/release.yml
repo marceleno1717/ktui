@@ -110,8 +110,9 @@ jobs:
     name: Publish to npm
     needs: build
     runs-on: ubuntu-latest
-    env:
-      NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+    permissions:
+      contents: read
+      id-token: write  # required for npm OIDC publishing
 
     steps:
       - uses: actions/checkout@v4
@@ -167,14 +168,14 @@ jobs:
           for pkg in npm-package/npm/ktui-*/; do
             echo "Publishing $pkg …"
             cd "$pkg"
-            npm publish --access public
+            npm publish --provenance --access public
             cd "$GITHUB_WORKSPACE"
           done
 
       - name: Publish main package
         run: |
           cd npm-package
-          npm publish --access public
+          npm publish --provenance --access public
 
   # ─────────────────────────────────────────────────────────────────────────────
   # 5. Publish to PyPI
