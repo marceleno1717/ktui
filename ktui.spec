@@ -23,15 +23,15 @@ for f in os.listdir(widgets_dir):
         textual_hidden.append(f"textual.widgets.{f[:-3]}")
 
 a = Analysis(
-    ["ktui/app.py"],
-    pathex=["."],
+    ["src/ktui/app.py"],
+    pathex=["src"],
     binaries=[],
     datas=[
         # Schema JSON
-        ("ktui/data/k8s_schema.json",   "ktui/data"),
+        ("src/ktui/data/k8s_schema.json",   "ktui/data"),
         # Textual CSS
-        ("ktui/ui/styles/app.tcss",     "ktui/ui/styles"),
-        ("ktui/ui/styles/app.tcss",     "ui/styles"), # For PyInstaller __main__ resolution
+        ("src/ktui/ui/styles/app.tcss",     "ktui/ui/styles"),
+        ("src/ktui/ui/styles/app.tcss",     "ui/styles"), # For PyInstaller __main__ resolution
     ] + textual_datas,
     hiddenimports=[
         "ruamel.yaml",
