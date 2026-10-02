@@ -1,6 +1,6 @@
 {
   "name": "@ktui/editor",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "An interactive terminal UI for building Kubernetes YAML manifests",
   "license": "PolyForm-Noncommercial-1.0.0",
   "repository": {
@@ -24,9 +24,9 @@
     "postinstall": "node scripts/postinstall.js"
   },
   "optionalDependencies": {
-    "@ktui/linux-x64-bin": "0.1.2",
-    "@ktui/darwin-arm64-bin": "0.1.2",
-    "@ktui/win32-x64-bin": "0.1.2"
+    "@ktui/linux-x64-bin": "0.1.3",
+    "@ktui/darwin-arm64-bin": "0.1.3",
+    "@ktui/win32-x64-bin": "0.1.3"
   },
   "publishConfig": {
     "access": "public"

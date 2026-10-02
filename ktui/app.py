@@ -6,13 +6,13 @@ from textual.app import App, ComposeResult
 from textual.theme import Theme
 
 from ktui.ui.screens.main_screen import MainScreen
-
+from ktui import __version__
 
 class YAMLGeneratorApp(App):
     """ktui — Kubernetes TUI manifest builder."""
 
     TITLE = "ktui"
-    SUB_TITLE = "Kubernetes manifest builder"
+    SUB_TITLE = f"Kubernetes manifest builder (v{__version__})"
     CSS_PATH = "ui/styles/app.tcss"
     
     BINDINGS = [
