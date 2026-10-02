@@ -9,11 +9,13 @@ cd "$(dirname "$0")"
 
 echo "Publishing initial ktui-linux-x64..."
 cd npm/ktui-linux-x64
+npm version 0.1.1 --no-git-tag-version --allow-same-version
 mkdir -p bin && touch bin/ktui && chmod +x bin/ktui
-npm publish --access public
+npm publish
 cd ../..
 
 echo "Publishing main ktui package..."
-npm publish --access public
+npm version 0.1.1 --no-git-tag-version --allow-same-version
+npm publish
 
 echo "Done! You can now configure OIDC on npmjs.com."

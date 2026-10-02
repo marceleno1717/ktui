@@ -29,9 +29,25 @@ jobs:
   # 2. Build a self-contained binary on each platform
   # ─────────────────────────────────────────────────────────────────────────────
   build:
-    name: Build — linux-x64
+    name: Build — ${{ matrix.target }}
     needs: test
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: linux-x64
+            bin: ktui
+
+          - os: macos-latest      # Apple Silicon (M1)
+            target: darwin-arm64
+            bin: ktui
+
+          - os: windows-latest
+            target: win32-x64
+            bin: ktui.exe
+
     steps:
       - uses: actions/checkout@v4
 
@@ -52,8 +68,8 @@ jobs:
       - name: Upload binary artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ktui-linux-x64
-          path: dist/ktui
+          name: ktui-${{ matrix.target }}
+          path: dist/${{ matrix.bin }}
           if-no-files-found: error
           retention-days: 1
 
@@ -75,8 +91,10 @@ jobs:
       - name: Rename binaries for release assets
         run: |
           mkdir -p release
-          cp artifacts/ktui-linux-x64/ktui release/ktui-linux-x64
-          chmod +x release/ktui-linux-x64
+          cp artifacts/ktui-linux-x64/ktui      release/ktui-linux-x64
+          cp artifacts/ktui-darwin-arm64/ktui    release/ktui-darwin-arm64
+          cp artifacts/ktui-win32-x64/ktui.exe   release/ktui-win32-x64.exe
+          chmod +x release/ktui-linux-x64 release/ktui-darwin-arm64
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -128,7 +146,9 @@ jobs:
             "
           }
 
-          stage linux-x64 ktui
+          stage linux-x64   ktui
+          stage darwin-arm64 ktui
+          stage win32-x64   ktui.exe
 
           # Stamp version into main package and optionalDependencies
           node -e "

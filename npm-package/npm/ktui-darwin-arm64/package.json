@@ -1,13 +1,13 @@
 {
-  "name": "@ktui/linux-x64",
+  "name": "@ktui/darwin-arm64",
   "version": "0.1.1",
-  "description": "ktui pre-built binary for linux-x64",
+  "description": "ktui pre-built binary for darwin-arm64",
   "license": "PolyForm-Noncommercial-1.0.0",
   "os": [
-    "linux"
+    "darwin"
   ],
   "cpu": [
-    "x64"
+    "arm64"
   ],
   "repository": {
     "type": "git",

@@ -24,7 +24,12 @@
     "postinstall": "node scripts/postinstall.js"
   },
   "optionalDependencies": {
-    "@ktui/linux-x64": "0.1.0"
+    "@ktui/linux-x64": "0.1.0",
+    "@ktui/darwin-arm64": "0.1.0",
+    "@ktui/win32-x64": "0.1.0"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "engines": {
     "node": ">=18"
