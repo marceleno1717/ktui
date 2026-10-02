@@ -22,8 +22,7 @@ jobs:
           python-version: "3.12"
           cache: pip
       - run: pip install -e ".[dev]"
-      - run: python test_interaction.py
-      - run: python test_full_suite.py
+      - run: python tests/test_full_suite.py
 
   # ─────────────────────────────────────────────────────────────────────────────
   # 2. Build a self-contained binary on each platform
