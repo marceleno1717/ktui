@@ -7,8 +7,20 @@ Run from the repo root (same directory as this file):
 
 import sys
 from pathlib import Path
+from PyInstaller.utils.hooks import collect_submodules, collect_data_files
 
 block_cipher = None
+
+# Automatically find all textual hidden imports and data files (like CSS)
+import os
+import textual
+textual_hidden = collect_submodules("textual")
+textual_datas = collect_data_files("textual")
+
+widgets_dir = os.path.join(os.path.dirname(textual.__file__), "widgets")
+for f in os.listdir(widgets_dir):
+    if f.endswith(".py") and f != "__init__.py":
+        textual_hidden.append(f"textual.widgets.{f[:-3]}")
 
 a = Analysis(
     ["ktui/app.py"],
@@ -19,21 +31,9 @@ a = Analysis(
         ("ktui/data/k8s_schema.json",   "ktui/data"),
         # Textual CSS
         ("ktui/ui/styles/app.tcss",     "ktui/ui/styles"),
-    ],
+        ("ktui/ui/styles/app.tcss",     "ui/styles"), # For PyInstaller __main__ resolution
+    ] + textual_datas,
     hiddenimports=[
-        "textual",
-        "textual.app",
-        "textual.widgets",
-        "textual.containers",
-        "textual.screen",
-        "textual.binding",
-        "textual.theme",
-        "textual.reactive",
-        "textual.css",
-        "textual.css.query",
-        "textual.driver",
-        "textual.drivers.linux_driver",
-        "textual.drivers.headless_driver",
         "ruamel.yaml",
         "ruamel.yaml.main",
         "pydantic",
@@ -53,7 +53,7 @@ a = Analysis(
         "ktui.ui.widgets.connection_panel",
         "ktui.ui.widgets.map_editor",
         "ktui.ui.widgets.list_editor",
-    ],
+    ] + textual_hidden,
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
