@@ -28,7 +28,7 @@ a = Analysis(
     binaries=[],
     datas=[
         # Schema JSON
-        ("src/ktui/data/k8s_schema.json",   "ktui/data"),
+        ("src/ktui/data/schemas/*.json",    "ktui/data/schemas"),
         # Textual CSS
         ("src/ktui/ui/styles/app.tcss",     "ktui/ui/styles"),
         ("src/ktui/ui/styles/app.tcss",     "ui/styles"), # For PyInstaller __main__ resolution
