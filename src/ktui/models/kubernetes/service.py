@@ -27,11 +27,11 @@ class ServicePort(BaseModel):
     port: int = Field(
         description="The port that will be exposed by this service.",
     )
-    targetPort: str = Field(  # noqa: N815
+    targetPort: str = Field(
         default="",
         description="Number or name of the port to access on the pods targeted by the service. Defaults to the port field if not specified.",
     )
-    nodePort: int | None = Field(  # noqa: N815
+    nodePort: int | None = Field(
         default=None,
         description="The port on each node on which this service is exposed when type is NodePort or LoadBalancer.",
     )
@@ -54,11 +54,11 @@ class ServiceSpec(BaseModel):
         default_factory=list,
         description="List of ports that are exposed by this service.",
     )
-    clusterIP: str = Field(  # noqa: N815
+    clusterIP: str = Field(
         default="",
         description="IP address of the service. Set to 'None' for headless services.",
     )
-    externalName: str = Field(  # noqa: N815
+    externalName: str = Field(
         default="",
         description="External domain name, required when type is ExternalName.",
     )

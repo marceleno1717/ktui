@@ -54,7 +54,7 @@ class ListEditor(Widget):
     class Changed(Message):
         """Posted whenever the list data changes."""
 
-        def __init__(self, list_editor: "ListEditor", data: list[dict]) -> None:
+        def __init__(self, list_editor: ListEditor, data: list[dict]) -> None:
             self.list_editor = list_editor
             self.data = data
             super().__init__()
@@ -115,15 +115,33 @@ class ListEditor(Widget):
     # ------------------------------------------------------------------
 
     def _add_item(self) -> None:
-        from ktui.ui.engine.form_builder import build_form_widgets
+        from textual.containers import Vertical as _V
+        from textual.widgets import Input as _I
+        from textual.widgets import Label as _L
+
+        from ktui.ui.engine.schema_form_builder import encode_path
 
         item_id = self._next_id
         self._next_id += 1
         self._active_ids.append(item_id)
         self._item_data[item_id] = {}
 
-        item_path = self._field_path + [str(len(self._active_ids) - 1)]
-        child_widgets = build_form_widgets(self._item_model, path=item_path)
+        item_idx = len(self._active_ids) - 1
+        item_path = self._field_path + [str(item_idx)]
+
+        # Build widgets directly from the Pydantic model fields
+        child_widgets = []
+        for field_name, field_info in self._item_model.model_fields.items():
+            path_str = ".".join(item_path + [field_name])
+            wid = encode_path(path_str)
+            label_text = field_name
+            child_widgets.append(
+                _V(
+                    _L(label_text, classes="field-label"),
+                    _I(id=wid, placeholder=label_text, classes="form-input"),
+                    classes="form-field",
+                )
+            )
 
         collapsible = Collapsible(
             *child_widgets,
@@ -170,9 +188,9 @@ class ListEditor(Widget):
         if not widget_id:
             return
 
-        from ktui.ui.engine.form_builder import parse_field_id
+        from ktui.ui.engine.schema_form_builder import decode_path
 
-        path = parse_field_id(widget_id)
+        path = decode_path(widget_id)
         if path is None:
             return
 
@@ -200,6 +218,11 @@ class ListEditor(Widget):
         self._emit_changed()
 
     def _emit_changed(self) -> None:
+        if getattr(self, "_debounce_timer", None) is not None:
+            self._debounce_timer.stop()
+        self._debounce_timer = self.set_timer(0.15, self._do_emit)
+
+    def _do_emit(self) -> None:
         data = [self._item_data.get(iid, {}) for iid in self._active_ids]
         self.post_message(self.Changed(self, data))
 

@@ -13,13 +13,13 @@ from ktui.models.shared import (
 )
 
 __all__ = [
-    "K8sResource",
-    "ObjectMeta",
-    "LabelSelector",
-    "PodTemplateSpec",
-    "PodSpec",
     "Container",
     "ContainerPort",
     "EnvVar",
+    "K8sResource",
+    "LabelSelector",
+    "ObjectMeta",
+    "PodSpec",
+    "PodTemplateSpec",
     "ResourceRequirements",
 ]

@@ -10,7 +10,6 @@ from ktui.models.core import K8sResource
 from ktui.models.shared import LabelSelector, ObjectMeta, PodTemplateSpec
 from ktui.registry import register_resource
 
-
 # ---------------------------------------------------------------------------
 # Deployment-specific sub-objects
 # ---------------------------------------------------------------------------
@@ -21,11 +20,11 @@ class RollingUpdateDeployment(BaseModel):
 
     model_config = ConfigDict(populate_by_name=True)
 
-    maxUnavailable: str = Field(  # noqa: N815
+    maxUnavailable: str = Field(
         default="25%",
         description="Max Pods that can be unavailable during the update (number or %).",
     )
-    maxSurge: str = Field(  # noqa: N815
+    maxSurge: str = Field(
         default="25%",
         description="Max Pods that can be scheduled above the desired count (number or %).",
     )
@@ -40,7 +39,7 @@ class DeploymentStrategy(BaseModel):
         default="RollingUpdate",
         description="RollingUpdate replaces Pods gradually. Recreate kills all before creating new.",
     )
-    rollingUpdate: RollingUpdateDeployment = Field(  # noqa: N815
+    rollingUpdate: RollingUpdateDeployment = Field(
         default_factory=RollingUpdateDeployment,
         description="Rolling update configuration. Only used when type=RollingUpdate.",
     )
@@ -67,11 +66,11 @@ class DeploymentSpec(BaseModel):
         default_factory=DeploymentStrategy,
         description="Update strategy for the Deployment.",
     )
-    minReadySeconds: int = Field(  # noqa: N815
+    minReadySeconds: int = Field(
         default=0,
         description="Seconds a Pod must be ready before being considered available.",
     )
-    revisionHistoryLimit: int = Field(  # noqa: N815
+    revisionHistoryLimit: int = Field(
         default=10,
         description="Number of old ReplicaSets to retain for rollback.",
     )

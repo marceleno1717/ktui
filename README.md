@@ -24,6 +24,7 @@ Tired of memorizing exact YAML structures, indentation rules, and valid fields f
 - 🏗️ **Schema-driven Forms**: Built-in definitions for core Kubernetes resources (Deployments, Pods, Services, ConfigMaps, RBAC, OpenShift Routes, etc.).
 - 🔍 **Interactive Field Picker**: Don't see the field you need? Open the searchable field picker to dynamically mount new properties or entire field groups (like `spec.template.spec.containers`) into your form.
 - ♻️ **Smart Merging**: Added fields are intelligently merged into their correct hierarchical sections—no duplicate categories or broken nesting.
+- 🗂️ **Multi-Tab Editing**: Open several resources at once (even multiple of the same kind), each in its own tab with independent state. Tabs are titled after `metadata.name`.
 - 👁️ **Live YAML Preview**: Press `p` at any time to instantly see the clean, formatted YAML you are building.
 - 🎨 **Modern TUI**: Keyboard-first navigation, multiple themes (press `t` to cycle), and a responsive layout powered by [Textual](https://textual.textualize.io/).
 - 💾 **Instant Save**: Save your generated manifests directly to your disk with a single keystroke.
@@ -62,7 +63,9 @@ Simply run `ktui` in your terminal to start the application.
 |-----|--------|
 | `↑` / `↓` | Navigate focused lists |
 | `Tab` / `Shift+Tab` | Move between form fields |
-| `Enter` | Select resource / confirm |
+| `Enter` | Select resource / confirm (opens it in a new tab) |
+| `Ctrl+W` | Close the active tab |
+| `Ctrl+V` | Validate the active tab |
 | `p` | Preview YAML |
 | `Ctrl+S` | Save YAML to file |
 | `t` | Cycle application theme |

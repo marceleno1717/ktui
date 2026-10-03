@@ -31,7 +31,7 @@ class ConfigMap(K8sResource):
         default_factory=dict,
         description="Data contains the configuration data. Each key must consist of alphanumeric characters, '-', '_' or '.'.",
     )
-    binaryData: dict[str, str] = Field(  # noqa: N815
+    binaryData: dict[str, str] = Field(
         default_factory=dict,
         description="BinaryData contains the binary data. Each key must consist of alphanumeric characters, '-', '_' or '.'. Values must be base64-encoded strings.",
     )

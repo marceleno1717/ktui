@@ -1,14 +1,23 @@
-"""YAML emitter for schema-driven form data.
+"""YAML emission for the schema-driven form — ruamel.yaml only.
 
-Takes a plain dict (form state) and emits clean YAML.
-No Pydantic validation — data is emitted as-is, omitting empty values.
+This replaces the old PyYAML-based emitter.  All code that previously
+did ``from ktui.schema.emitter import emit_yaml_from_dict`` continues to
+work unchanged; we just produce cleaner 2-space-indented output now.
+
+The ``_clean`` function is exported because the validation layer imports it.
 """
 
 from __future__ import annotations
 
+import io
 from typing import Any
 
-import yaml
+from ruamel.yaml import YAML
+from ruamel.yaml.comments import CommentedMap
+
+# ---------------------------------------------------------------------------
+# Internal helpers
+# ---------------------------------------------------------------------------
 
 
 def _clean(value: Any) -> Any:
@@ -22,7 +31,39 @@ def _clean(value: Any) -> Any:
     return value
 
 
+def _to_commented_map(data: Any) -> Any:
+    """Recursively convert plain dicts to CommentedMap (preserves insertion order)."""
+    if isinstance(data, dict):
+        cm = CommentedMap()
+        for k, v in data.items():
+            cm[k] = _to_commented_map(v)
+        return cm
+    if isinstance(data, list):
+        return [_to_commented_map(item) for item in data]
+    return data
+
+
+def _build_yaml() -> YAML:
+    yaml = YAML()
+    yaml.default_flow_style = False
+    yaml.indent(mapping=2, sequence=4, offset=2)
+    yaml.width = 120
+    return yaml
+
+
+# ---------------------------------------------------------------------------
+# Public API
+# ---------------------------------------------------------------------------
+
+
 def emit_yaml_from_dict(data: dict[str, Any]) -> str:
-    """Emit YAML from a nested dict, removing empty values."""
+    """Emit YAML from a nested dict, stripping empty values.
+
+    Uses ruamel.yaml so output is consistent with the generator module
+    (2-space mapping indent, 4-space sequence indent, 2-space offset).
+    """
     cleaned = _clean(data)
-    return yaml.dump(cleaned, default_flow_style=False, allow_unicode=True, sort_keys=False)
+    commented = _to_commented_map(cleaned)
+    stream = io.StringIO()
+    _build_yaml().dump(commented, stream)
+    return stream.getvalue()

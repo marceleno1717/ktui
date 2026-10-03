@@ -1,74 +1,117 @@
 """Resource registry — catalog of all available K8s/OC resource models.
 
+P1-7 update: CATALOG is now populated from two sources:
+1. Schema index (``data/schemas/index.json``) — all 22 known kinds.
+   These get a lightweight ``SchemaEntry`` with no Pydantic model.
+2. ``@register_resource`` decorator on Pydantic model classes — overrides the
+   schema-only entry with a richer one that includes the model for validation.
+
+This means the sidebar always shows all 22 kinds, and Pydantic validation
+kicks in only for the 5 kinds that have a model.
+
 Usage
 -----
-Decorate a resource model class with ``@register_resource``:
+Decorate a resource model class with ``@register_resource``::
 
     from ktui.registry import register_resource
 
-    @register_resource(platform="kubernetes", group="core")
-    class Pod(K8sResource):
+    @register_resource(platform="kubernetes", group="apps")
+    class Deployment(K8sResource):
         ...
 
-The app then queries the catalog at startup:
+Query::
 
     from ktui.registry import CATALOG
 
     k8s_resources = CATALOG.list_resources(platform="kubernetes")
-
-Design decisions
-----------------
-- Decorator pattern: each resource self-registers; no central list to maintain.
-- ``CATALOG`` is a module-level singleton; importing it anywhere returns the
-  same instance.
-- ``platform`` is a plain string so future platforms (e.g. "argo", "flux")
-  need no enum change.
-- ``group`` loosely mirrors the Kubernetes API group (core, apps,
-  route.openshift.io, etc.) and is used only for sidebar grouping in the UI.
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any
+from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
+# Map apiVersion prefix -> group name used for sidebar grouping
+_API_GROUP_LABELS: dict[str, str] = {
+    "apps/v1": "apps",
+    "v1": "core",
+    "batch/v1": "batch",
+    "networking.k8s.io/v1": "networking",
+    "autoscaling/v2": "autoscaling",
+    "rbac.authorization.k8s.io/v1": "rbac",
+    "route.openshift.io/v1": "route.openshift.io",
+}
+
+
+def _api_to_group(api_version: str) -> str:
+    return _API_GROUP_LABELS.get(api_version, api_version.split("/")[0] if "/" in api_version else "core")
+
 
 @dataclass(frozen=True)
 class ResourceEntry:
-    """Metadata stored alongside each registered resource model."""
+    """Metadata stored alongside each registered resource."""
 
     platform: str
     group: str
-    model: type  # the Pydantic BaseModel subclass
+    kind: str
+    model: type | None = None  # None for schema-only (no Pydantic model yet)
 
 
 class ResourceCatalog:
     """Singleton catalog that holds every registered resource."""
 
     def __init__(self) -> None:
-        self._entries: list[ResourceEntry] = []
+        self._entries: dict[str, ResourceEntry] = {}  # keyed by kind
 
     def register(self, *, platform: str, group: str, model: type) -> None:
-        """Add a resource model to the catalog."""
-        self._entries.append(ResourceEntry(platform=platform, group=group, model=model))
+        """Add/override a resource model in the catalog (called by decorator)."""
+        kind = model.__name__
+        self._entries[kind] = ResourceEntry(
+            platform=platform,
+            group=group,
+            kind=kind,
+            model=model,
+        )
+
+    def register_schema(self, *, platform: str, kind: str, api_version: str) -> None:
+        """Register a schema-only entry (no Pydantic model)."""
+        # Don't override an already-registered model entry
+        if kind not in self._entries:
+            self._entries[kind] = ResourceEntry(
+                platform=platform,
+                group=_api_to_group(api_version),
+                kind=kind,
+                model=None,
+            )
 
     def list_resources(self, platform: str) -> list[ResourceEntry]:
-        """Return all entries for a given platform, preserving insertion order."""
-        return [e for e in self._entries if e.platform == platform]
+        """Return all entries for a given platform, sorted by kind."""
+        return sorted(
+            [e for e in self._entries.values() if e.platform == platform],
+            key=lambda e: e.kind,
+        )
 
     def list_groups(self, platform: str) -> list[str]:
-        """Return unique API groups for a platform, in insertion order."""
-        seen: dict[str, None] = {}
-        for e in self._entries:
+        """Return unique API groups for a platform, in alpha order."""
+        groups: set[str] = set()
+        for e in self._entries.values():
             if e.platform == platform:
-                seen[e.group] = None
-        return list(seen)
+                groups.add(e.group)
+        return sorted(groups)
+
+    def get_model(self, kind: str) -> type | None:
+        """Return the Pydantic model for *kind*, or None if schema-only."""
+        entry = self._entries.get(kind)
+        return entry.model if entry else None
 
     def __iter__(self) -> Iterator[ResourceEntry]:
-        return iter(self._entries)
+        return iter(self._entries.values())
+
+    def __len__(self) -> int:
+        return len(self._entries)
 
 
 # Module-level singleton — import this everywhere.
@@ -83,16 +126,8 @@ def register_resource(*, platform: str, group: str = "core"):
     platform:
         ``"kubernetes"`` or ``"openshift"`` (or any future platform string).
     group:
-        Kubernetes API group, e.g. ``"core"``, ``"apps"``,
-        ``"route.openshift.io"``.  Defaults to ``"core"``.
-
-    Example
-    -------
-    ::
-
-        @register_resource(platform="kubernetes", group="core")
-        class Pod(K8sResource):
-            ...
+        Kubernetes API group, e.g. ``"core"``, ``"apps"``.  Defaults to
+        ``"core"``.
     """
 
     def decorator(cls: type) -> type:
@@ -103,20 +138,40 @@ def register_resource(*, platform: str, group: str = "core"):
 
 
 # ---------------------------------------------------------------------------
-# Auto-registration: import all resource modules so decorators fire.
+# P1-7: Bootstrap — register all schema kinds from index.json
 # ---------------------------------------------------------------------------
-# Each import causes the module-level decorator to run, populating CATALOG.
-# Add new modules here as resources are implemented.
 
-def _load_resources() -> None:
-    # Kubernetes
-    from ktui.models.kubernetes import pod as _pod_module  # noqa: F401
-    from ktui.models.kubernetes import deployment as _deployment_module  # noqa: F401
-    from ktui.models.kubernetes import service as _service_module  # noqa: F401
-    from ktui.models.kubernetes import configmap as _configmap_module  # noqa: F401
+def _bootstrap_from_schema() -> None:
+    """Populate CATALOG with all 22 kinds from schema index (fast, index only)."""
+    try:
+        from ktui.schema.loader import _load_index
+        index = _load_index()
+        for entry in index.get("resources", []):
+            CATALOG.register_schema(
+                platform="kubernetes",
+                kind=entry["kind"],
+                api_version=entry.get("apiVersion", ""),
+            )
+    except Exception:
+        pass  # Silently skip if schema not available (tests, bundled builds)
 
-    # OpenShift
-    from ktui.models.openshift import route as _route_module  # noqa: F401
+
+def _load_pydantic_models() -> None:
+    """Import Pydantic model modules so @register_resource decorators fire.
+
+    These *override* the schema-only entries with richer Pydantic entries.
+    Auto-discovery via pkgutil is possible but risky; explicit list is safer.
+    """
+    try:
+        from ktui.models.kubernetes import configmap as _  # noqa: F401, F811
+        from ktui.models.kubernetes import deployment as _  # noqa: F401, F811
+        from ktui.models.kubernetes import pod as _  # noqa: F401, F811
+        from ktui.models.kubernetes import service as _  # noqa: F401, F811
+        from ktui.models.openshift import route as _  # noqa: F401, F811  # noqa: F401
+    except Exception:
+        pass
 
 
-_load_resources()
+# Order matters: bootstrap schema first, then override with Pydantic models.
+_bootstrap_from_schema()
+_load_pydantic_models()

@@ -10,7 +10,6 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-
 # ---------------------------------------------------------------------------
 # Metadata
 # ---------------------------------------------------------------------------
@@ -54,7 +53,7 @@ class ContainerPort(BaseModel):
 
     model_config = ConfigDict(populate_by_name=True)
 
-    containerPort: int = Field(  # noqa: N815
+    containerPort: int = Field(
         description="Port number to expose.",
     )
     name: str = Field(
@@ -65,7 +64,7 @@ class ContainerPort(BaseModel):
         default="TCP",
         description="Protocol for this port.",
     )
-    hostPort: int | None = Field(  # noqa: N815
+    hostPort: int | None = Field(
         default=None,
         description="Host port to bind. Rarely needed.",
     )
@@ -102,7 +101,7 @@ class Container(BaseModel):
 
     name: str = Field(description="Unique name for this container within the Pod.")
     image: str = Field(description="Container image, e.g. nginx:1.27.")
-    imagePullPolicy: Literal["Always", "IfNotPresent", "Never"] | None = Field(  # noqa: N815
+    imagePullPolicy: Literal["Always", "IfNotPresent", "Never"] | None = Field(
         default=None,
         description="When to pull the image.",
     )
@@ -126,7 +125,7 @@ class Container(BaseModel):
         default_factory=ResourceRequirements,
         description="Compute resource requests and limits.",
     )
-    workingDir: str = Field(  # noqa: N815
+    workingDir: str = Field(
         default="",
         description="Container's working directory.",
     )
@@ -150,27 +149,27 @@ class PodSpec(BaseModel):
         default_factory=list,
         description="List of containers belonging to the Pod. At least one required.",
     )
-    initContainers: list[Container] = Field(  # noqa: N815
+    initContainers: list[Container] = Field(
         default_factory=list,
         description="Initialization containers run before app containers.",
     )
-    restartPolicy: Literal["Always", "OnFailure", "Never"] = Field(  # noqa: N815
+    restartPolicy: Literal["Always", "OnFailure", "Never"] = Field(
         default="Always",
         description="Restart policy for all containers in the Pod.",
     )
-    serviceAccountName: str = Field(  # noqa: N815
+    serviceAccountName: str = Field(
         default="",
         description="ServiceAccount to run the Pod as.",
     )
-    nodeName: str = Field(  # noqa: N815
+    nodeName: str = Field(
         default="",
         description="Request scheduling to a specific node.",
     )
-    hostNetwork: bool = Field(  # noqa: N815
+    hostNetwork: bool = Field(
         default=False,
         description="Use the host's network namespace.",
     )
-    dnsPolicy: Literal["ClusterFirst", "ClusterFirstWithHostNet", "Default", "None"] = Field(  # noqa: N815
+    dnsPolicy: Literal["ClusterFirst", "ClusterFirstWithHostNet", "Default", "None"] = Field(
         default="ClusterFirst",
         description="DNS policy for the Pod.",
     )
@@ -186,7 +185,7 @@ class LabelSelector(BaseModel):
 
     model_config = ConfigDict(populate_by_name=True)
 
-    matchLabels: dict[str, str] = Field(  # noqa: N815
+    matchLabels: dict[str, str] = Field(
         default_factory=dict,
         description='Map of key/value pairs. E.g. {"app": "nginx"}.',
     )

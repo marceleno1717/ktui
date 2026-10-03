@@ -31,8 +31,8 @@ class MapEditor(Widget):
         height: auto;
     }
     MapEditor .map-row {
-        height: auto;
-        margin-bottom: 0;
+        height: 3;
+        margin-bottom: 1;
     }
     MapEditor .map-key {
         width: 1fr;
@@ -57,7 +57,7 @@ class MapEditor(Widget):
     class Changed(Message):
         """Posted whenever the map data changes."""
 
-        def __init__(self, map_editor: "MapEditor", data: dict[str, str]) -> None:
+        def __init__(self, map_editor: MapEditor, data: dict[str, str]) -> None:
             self.map_editor = map_editor
             self.data = data
             super().__init__()
@@ -65,7 +65,9 @@ class MapEditor(Widget):
     def __init__(self, **kwargs: object) -> None:
         super().__init__(**kwargs)
         self._next_id: int = 0
-        self._active_ids: set[int] = set()
+        # Store references to widgets (idx -> (key_input, val_input, row_container))
+        # This completely avoids DOM queries and race conditions during mount.
+        self._row_refs: dict[int, tuple[Input, Input, Horizontal]] = {}
 
     def compose(self) -> ComposeResult:
         yield Label(self.name or "Map", classes="text-bold")
@@ -87,9 +89,13 @@ class MapEditor(Widget):
             self._add_row()
         elif btn_id == "map-import-btn":
             self._open_import_modal()
-        elif btn_id.startswith("map-remove-"):
-            idx = int(btn_id.split("-")[-1])
-            self._remove_row(idx)
+        elif "-remove-" in btn_id:
+            try:
+                idx = int(btn_id.rsplit("-", 1)[-1])
+                self._remove_row(idx)
+                self._emit_changed()
+            except (ValueError, IndexError):
+                pass
 
     def _open_import_modal(self) -> None:
         from ktui.ui.screens.cluster_import import ClusterImportScreen
@@ -110,7 +116,9 @@ class MapEditor(Widget):
 
     def on_input_changed(self, event: Input.Changed) -> None:
         event.stop()
-        self._emit_changed()
+        if getattr(self, "_debounce_timer", None) is not None:
+            self._debounce_timer.stop()
+        self._debounce_timer = self.set_timer(0.15, self._emit_changed)
 
     # ------------------------------------------------------------------
     # Internal helpers
@@ -119,62 +127,73 @@ class MapEditor(Widget):
     def _add_row(self, initial_key: str = "", initial_val: str = "") -> None:
         idx = self._next_id
         self._next_id += 1
-        self._active_ids.add(idx)
+        
+        prefix = self.id or f"map_{id(self)}"
 
+        key_input = Input(value=initial_key, placeholder="key", id=f"{prefix}-key-{idx}", classes="map-key")
+        val_input = Input(value=initial_val, placeholder="value", id=f"{prefix}-val-{idx}", classes="map-value")
         row = Horizontal(
-            Input(value=initial_key, placeholder="key", id=f"map-key-{idx}", classes="map-key"),
-            Input(value=initial_val, placeholder="value", id=f"map-val-{idx}", classes="map-value"),
-            Button("✕", id=f"map-remove-{idx}", classes="map-remove-btn"),
+            key_input,
+            val_input,
+            Button("✕", id=f"{prefix}-remove-{idx}", classes="map-remove-btn"),
             classes="map-row",
-            id=f"map-row-{idx}",
+            id=f"{prefix}-row-{idx}",
         )
-        # Hide the empty hint
+        
+        # Save refs directly
+        self._row_refs[idx] = (key_input, val_input, row)
+
         try:
             self.query_one("#map-empty-hint").display = False
         except Exception:
             pass
 
-        rows = self.query_one("#map-rows")
-        rows.mount(row)
-
-    def _remove_row(self, idx: int) -> None:
-        self._active_ids.discard(idx)
         try:
-            self.query_one(f"#map-row-{idx}").remove()
+            rows = self.query_one("#map-rows")
+            rows.mount(row)
         except Exception:
             pass
-        if not self._active_ids:
+
+    def _remove_row(self, idx: int) -> None:
+        if idx in self._row_refs:
+            _, _, row = self._row_refs.pop(idx)
+            try:
+                row.remove()
+            except Exception:
+                pass
+                
+        if not self._row_refs:
             try:
                 self.query_one("#map-empty-hint").display = True
             except Exception:
                 pass
-        self._emit_changed()
 
     def _emit_changed(self) -> None:
-        data: dict[str, str] = {}
-        for idx in self._active_ids:
-            try:
-                key = self.query_one(f"#map-key-{idx}", Input).value.strip()
-                val = self.query_one(f"#map-val-{idx}", Input).value
-                if key:
-                    data[key] = val
-            except Exception:
-                pass
+        data = self.data
         self.post_message(self.Changed(self, data))
 
     # ------------------------------------------------------------------
     # Public helpers
     # ------------------------------------------------------------------
 
-    def get_data(self) -> dict[str, str]:
+    @property
+    def data(self) -> dict[str, str]:
         """Return current map data (snapshot)."""
         data: dict[str, str] = {}
-        for idx in self._active_ids:
-            try:
-                key = self.query_one(f"#map-key-{idx}", Input).value.strip()
-                val = self.query_one(f"#map-val-{idx}", Input).value
-                if key:
-                    data[key] = val
-            except Exception:
-                pass
+        for key_in, val_in, _ in self._row_refs.values():
+            k = key_in.value.strip()
+            if k:
+                data[k] = val_in.value
         return data
+
+    @data.setter
+    def data(self, new_data: dict[str, str]) -> None:
+        """Clear existing and set new data."""
+        for idx in list(self._row_refs.keys()):
+            self._remove_row(idx)
+            
+        for k, v in new_data.items():
+            self._add_row(str(k), str(v))
+        
+        # Do not emit changed here: avoid infinite loops and 
+        # race conditions when the form is initially loading.
