@@ -4,17 +4,20 @@ from __future__ import annotations
 
 from textual import work
 from textual.app import ComposeResult
-from textual.containers import Vertical
 from textual.message import Message
 from textual.widget import Widget
 from textual.widgets import Button, Label, Select
 
+from ktui.kubernetes.cache import K8S_CACHE
 from ktui.kubernetes.client import (
     ClusterStatus,
     check_connection,
     get_all_contexts,
-    run_kubectl,
+    get_all_namespaces,
+    set_namespace,
+    use_context,
 )
+
 
 class ConnectionPanel(Widget):
     """Panel showing K8s connection and namespace selector."""
@@ -103,12 +106,12 @@ class ConnectionPanel(Widget):
             lbl.update("● Connected")
             lbl.remove_class("disconnected")
             lbl.add_class("connected")
-            
-            from ktui.kubernetes.client import get_all_namespaces
+
             namespaces = get_all_namespaces()
-            self.app._cached_namespaces = namespaces
+            # Store in shared cache (replaces app._cached_namespaces hack)
+            K8S_CACHE.set("all_namespaces", namespaces)
             self._last_namespace = status.namespace
-            
+
             sel_ns.set_options([(n, n) for n in namespaces])
             if status.namespace and status.namespace in namespaces:
                 sel_ns.value = status.namespace
@@ -135,23 +138,23 @@ class ConnectionPanel(Widget):
             context_name = str(event.value)
             if context_name == self._last_context:
                 return
-            
-            code, out, err = run_kubectl(["config", "use-context", context_name])
-            if code == 0:
+
+            success = use_context(context_name)
+            if success:
                 self._last_context = context_name
                 self.post_message(self.ContextChanged(context_name))
                 self.refresh_connection()
             else:
-                self.app.notify(f"Failed to change context: {err}", severity="error")
+                self.app.notify("Failed to change context", severity="error")
 
         elif event.select.id == "conn-namespace-select":
             namespace = str(event.value)
             if getattr(self, "_last_namespace", None) == namespace:
                 return
-            
-            from ktui.kubernetes.client import set_namespace
+
             success = set_namespace(namespace)
             if success:
                 self._last_namespace = namespace
             else:
                 self.app.notify("Failed to change namespace", severity="error")
+

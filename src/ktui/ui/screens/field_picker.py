@@ -74,6 +74,7 @@ class FieldPickerScreen(ModalScreen[list[str]]):
         ]
         self._selected: set[str] = set()
         self._current_query = ""
+        self._search_timer: object | None = None  # handle for debounce
 
     def compose(self) -> ComposeResult:
         with Vertical(id="field-picker-dialog"):
@@ -122,7 +123,7 @@ class FieldPickerScreen(ModalScreen[list[str]]):
                     nodes[parent_path] = grandparent_node.add(
                         label,
                         data=("GROUP", parent_path),
-                        expand=True
+                        expand=(i <= 3)
                     )
             
             # Add leaf node
@@ -137,7 +138,13 @@ class FieldPickerScreen(ModalScreen[list[str]]):
     def on_input_changed(self, event: Input.Changed) -> None:
         if event.input.id == "field-search":
             self._current_query = event.value
-            self.set_timer(0.25, self._apply_search)
+            # Cancel any pending debounce timer before rescheduling
+            if self._search_timer is not None:
+                try:
+                    self._search_timer.stop()  # type: ignore[union-attr]
+                except Exception:
+                    pass
+            self._search_timer = self.set_timer(0.25, self._apply_search)
 
     def _apply_search(self) -> None:
         self._refresh_list(self._current_query)

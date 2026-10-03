@@ -35,7 +35,7 @@ class RoutePort(BaseModel):
 
     model_config = ConfigDict(populate_by_name=True)
 
-    targetPort: str = Field(  # noqa: N815
+    targetPort: str = Field(
         default="",
         description="The target port on pods selected by the service.",
     )
@@ -50,7 +50,7 @@ class TLSConfig(BaseModel):
         default=None,
         description="TLS termination type.",
     )
-    insecureEdgeTerminationPolicy: Literal["Allow", "Redirect", "None"] | None = Field(  # noqa: N815
+    insecureEdgeTerminationPolicy: Literal["Allow", "Redirect", "None"] | None = Field(
         default=None,
         description="Policy for insecure connections.",
     )

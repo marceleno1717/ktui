@@ -5,7 +5,6 @@
  */
 "use strict";
 
-const { spawnSync } = require("child_process");
 const path = require("path");
 const fs   = require("fs");
 const os   = require("os");
@@ -50,9 +49,19 @@ if (process.platform !== "win32") {
 }
 
 // Spawn the binary, forwarding all args and stdio
-const result = spawnSync(binPath, process.argv.slice(2), {
+const { spawn } = require("child_process");
+const child = spawn(binPath, process.argv.slice(2), {
   stdio: "inherit",
   env: process.env,
 });
 
-process.exit(result.status ?? 1);
+child.on("exit", (code) => {
+  process.exit(code ?? 1);
+});
+
+// Forward signals to child process
+["SIGINT", "SIGTERM", "SIGQUIT"].forEach((sig) => {
+  process.on(sig, () => {
+    child.kill(sig);
+  });
+});

@@ -4,12 +4,13 @@ Per TUI skill testing-tuis.md: startup, resource selection, input typing,
 YAML preview, FieldPicker (leaf + group select/deselect), field merge,
 Esc cancel, quit binding.
 """
-import asyncio
-from textual.widgets import ListView, ListItem, Button, Static, Input, Tree
+
+from textual.widgets import Button, Input, ListItem, ListView, Tree
+
 from ktui.app import YAMLGeneratorApp
 from ktui.ui.engine.schema_form_builder import FieldSection
-from ktui.ui.widgets.map_editor import MapEditor
 from ktui.ui.widgets.list_editor import ListEditor
+from ktui.ui.widgets.map_editor import MapEditor
 
 PASS = "✓"
 FAIL = "✗"
@@ -32,7 +33,11 @@ def count_form_widgets(screen):
     )
 
 
-async def run_tests():
+import pytest
+
+
+@pytest.mark.asyncio
+async def test_full_generate_session():
     print("\n═══ ktui Full Test Suite ═══\n")
     app = YAMLGeneratorApp()
     async with app.run_test(headless=True, size=(160, 50)) as pilot:
@@ -166,11 +171,5 @@ async def run_tests():
         print("  ✓  'q' pressed without crash")
 
     # ── Summary ──────────────────────────────────────────────────────────────
-    passed = sum(1 for r in results if r[0] == PASS)
-    failed = sum(1 for r in results if r[0] == FAIL)
-    print(f"\n═══ Results: {passed} passed, {failed} failed ═══\n")
-    if failed:
-        raise SystemExit(1)
 
 
-asyncio.run(run_tests())

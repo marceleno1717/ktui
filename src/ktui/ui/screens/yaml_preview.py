@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 
 from textual.app import ComposeResult
@@ -94,6 +93,7 @@ class YAMLPreviewScreen(ModalScreen[bool]):
 
     def _browse(self) -> None:
         from textual.widgets import Input
+
         from ktui.ui.screens.directory_picker import DirectoryPickerScreen
         
         input_widget = self.query_one("#file-path-input", Input)

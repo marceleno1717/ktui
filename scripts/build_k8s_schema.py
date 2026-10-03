@@ -364,7 +364,7 @@ def build_schema() -> dict[str, Any]:
         print(f"Processing {kind}...", file=sys.stderr)
         output = run_explain(resource)
         if not output:
-            print(f"  SKIPPED (no output)", file=sys.stderr)
+            print("  SKIPPED (no output)", file=sys.stderr)
             continue
 
         fields = parse_explain(output)
@@ -384,9 +384,28 @@ def build_schema() -> dict[str, Any]:
 
 if __name__ == "__main__":
     schema = build_schema()
-    out_path = "src/yamlgenerator/data/k8s_schema.json"
-    import os; os.makedirs("src/yamlgenerator/data", exist_ok=True)
-    with open(out_path, "w") as f:
-        json.dump(schema, f, indent=2)
-    print(f"Written to {out_path}", file=sys.stderr)
-    print(f"Resources: {len(schema['resources'])}", file=sys.stderr)
+
+    # P1-6: Write per-kind shards + index
+    import os
+    shards_dir = "src/ktui/data/schemas"
+    os.makedirs(shards_dir, exist_ok=True)
+
+    index_entries = []
+    for r in schema["resources"]:
+        kind = r["kind"]
+        shard_path = os.path.join(shards_dir, f"{kind.lower()}.json")
+        with open(shard_path, "w") as f:
+            json.dump(r, f, indent=2)
+        print(f"  shard: {shard_path}", file=sys.stderr)
+        index_entries.append({
+            "kind": r["kind"],
+            "apiVersion": r.get("apiVersion", ""),
+            "resource": r.get("resource", kind.lower() + "s"),
+            "common_fields": r.get("common_fields", []),
+        })
+
+    index_path = os.path.join(shards_dir, "index.json")
+    with open(index_path, "w") as f:
+        json.dump({"resources": index_entries}, f, indent=2)
+    print(f"  index: {index_path}", file=sys.stderr)
+

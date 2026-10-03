@@ -116,8 +116,12 @@ Button.-success:hover {
 /* ------ Form field containers ------------------------------ */
 
 .form-field {
-    height: auto;
+    height: 4;
     margin-bottom: 1;
+}
+
+.form-field-dynamic {
+    height: auto;
 }
 
 .form-field Label {
@@ -162,4 +166,14 @@ MapEditor {
 
 ListEditor {
     margin-top: 0;
+}
+
+/* ------ Form Validation ------------------------------------ */
+
+.invalid-field > .field-label {
+    color: $error !important;
+}
+
+.invalid-field > .form-input {
+    border: tall $error !important;
 }

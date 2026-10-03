@@ -13,14 +13,13 @@ The host screen reads values back via on_input_changed etc.
 from __future__ import annotations
 
 import re
-from typing import Any
 
 from textual.app import ComposeResult
 from textual.containers import Horizontal, Vertical
 from textual.widget import Widget
 from textual.widgets import Button, Input, Label, Select, Static, Switch
 
-from ktui.schema.loader import get_common_fields, get_resource, resolve_field_path
+from ktui.schema.loader import get_resource, resolve_field_path
 
 # Widget ID prefix / separator
 _PREFIX = "sf"    # schema field
@@ -126,7 +125,7 @@ def _widget_for_field(
         return Vertical(
             Label(label_text, classes="field-label"),
             MapEditor(id=widget_id, classes="form-input", name=label),
-            classes="form-field",
+            classes="form-field form-field-dynamic",
         )
 
     if ftype.startswith("[]") or ftype == "array":
@@ -318,7 +317,9 @@ def _render_path_tree(
         if isinstance(val, dict):
             is_array = key.endswith("[]") or key.endswith("-ARR")
             if is_array:
-                widgets.append(ArrayGroup(key, val, schema_fields, namespaces, path_replacements))
+                ag = ArrayGroup(key, val, schema_fields, namespaces, path_replacements)
+                ag._full_path = node_path
+                widgets.append(ag)
             else:
                 branch_widgets = _render_path_tree(val, schema_fields, namespaces, path_replacements, node_path)
                 clean_key = key.replace("[]", "").replace("-ARR", "")
@@ -348,7 +349,7 @@ def _render_path_tree(
     return widgets
 
 
-def build_schema_form(kind: str, namespaces: list[str] | None = None) -> tuple[list[Widget], set[str]]:
+def build_schema_form(kind: str, namespaces: list[str] | None = None, extra_paths: list[str] | None = None) -> tuple[list[Widget], set[str]]:
     """
     Build form widgets for a resource kind using the schema.
 
@@ -360,7 +361,12 @@ def build_schema_form(kind: str, namespaces: list[str] | None = None) -> tuple[l
     if resource is None:
         return [Static(f"No schema found for {kind}")], set()
 
-    common = resource["common_fields"]
+    common = list(resource["common_fields"])
+    if extra_paths:
+        for p in extra_paths:
+            if p not in common:
+                common.append(p)
+                
     schema_fields = resource["fields"]
     shown_paths: set[str] = set(common)
 
@@ -407,6 +413,10 @@ def merge_paths_into_form(
 ) -> None:
     """Intelligently merge new field paths into existing form sections, or create new ones."""
     sections = group_common_fields_by_section(paths)
+    
+    # Batch collection of widgets to mount
+    mount_queue: list[tuple[Widget, list[Widget]]] = []
+    
     for section_name, sec_paths in sections.items():
         tree = _build_path_tree(sec_paths)
         
@@ -418,33 +428,38 @@ def merge_paths_into_form(
                 
         if target:
             # We must manually merge the tree into the existing target
-            # by traversing the dict structure.
             def _merge_tree(sub_tree: dict, parent_container: Widget, current_path: str):
+                widgets_to_add = []
                 for key, val in sub_tree.items():
                     node_path = f"{current_path}.{key}" if current_path else key
                     if isinstance(val, dict):
                         is_array = key.endswith("[]") or key.endswith("-ARR")
                         if is_array:
-                            parent_container.mount(ArrayGroup(key, val, schema_fields, namespaces))
+                            ag = ArrayGroup(key, val, schema_fields, namespaces, {})
+                            ag._full_path = node_path
+                            widgets_to_add.append(ag)
                         else:
                             body_id = f"tg_body_{encode_path(node_path)}"
-                            # Does this container exist?
                             try:
                                 existing_body = target.query_one(f"#{body_id}")
                                 _merge_tree(val, existing_body, node_path)
                             except Exception:
-                                # Doesn't exist, generate the rest and mount it
                                 widgets = _render_path_tree({key: val}, schema_fields, namespaces, current_path=current_path)
-                                parent_container.mount(*widgets)
+                                widgets_to_add.extend(widgets)
                     else:
-                        # Leaf node
                         widgets = _render_path_tree({key: val}, schema_fields, namespaces, current_path=current_path)
-                        parent_container.mount(*widgets)
+                        widgets_to_add.extend(widgets)
+                if widgets_to_add:
+                    mount_queue.append((parent_container, widgets_to_add))
             
             body = target.query_one(".section-body")
             _merge_tree(tree, body, section_name)
         else:
-            # Create a new top-level section in the advanced container
             widgets = _render_path_tree(tree, schema_fields, namespaces, current_path=section_name)
             new_section = FieldSection(section_name, widgets)
-            advanced_container.mount(new_section)
+            mount_queue.append((advanced_container, [new_section]))
+
+    # Perform all mounts in batch
+    for parent, widgets in mount_queue:
+        parent.mount(*widgets)
+
